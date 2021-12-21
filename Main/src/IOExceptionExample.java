@@ -17,58 +17,43 @@ public class IOExceptionExample {
 
     }
 
-    /* И здесь все удобно, не падает,
-       а рассказывает по-русски, почему не получилось */
     private static boolean copyFileUsingStream(String sourceFilename, String sourceEnc,
                                                String destFilename, String descEnc) {
-        Reader fis = null;
-        Writer fos = null;
-        //Charset sEnc = Charset.forName(sourceEnc);
-        //Charset dEnc = Charset.forName(sourceEnc);
 
-        try {
-            fis = new InputStreamReader(new FileInputStream(new File(sourceFilename)), sourceEnc);
-        } catch (FileNotFoundException e) {
-            System.out.println("Проблема с входным файлом");
-            return false;
-        } catch (UnsupportedEncodingException e) {
-            System.out.println("Указана неизвестная кодировка входного файла");
-            return false;
-        }
+        try (Reader fis = new InputStreamReader(new FileInputStream(new File(sourceFilename)), sourceEnc);
+             Writer fos = new OutputStreamWriter(new FileOutputStream(new File(sourceFilename)), sourceEnc)) {
+            /* все открылось, можно копировать */
 
-        try {
-            fos = new OutputStreamWriter(new FileOutputStream(new File(sourceFilename)), descEnc);
-        } catch (UnsupportedEncodingException e) {
-            System.out.println("Указана неизвестная кодировка выходного файла");
-            return false;
-        }
-        catch (IOException e) {
-            System.out.println("Проблема с выходным файлом");
-            return false;
-        }
-
-        /* все открылось, можно копировать */
-
-        char[] buffer = new char[1024];
-        int length;
-        try {
+            char[] buffer = new char[1024];
+            int length;
             while ((length = fis.read(buffer)) > 0) {
                 fos.write(buffer, 0, length);
             }
-        } catch (IOException ex){
-            System.out.println("При копировании возникла ошибка");
+        }
+        catch (FileNotFoundException ex){
+            System.out.println("Не удалось открыть файл " + ex.getMessage());
             return false;
         }
-        finally {
-            try {
-                fis.close();
-                fos.close();
-            }
-            catch (IOException ex){
-                System.out.println("Проблема при закрытии файла");
-                return false;
-            }
+        catch (UnsupportedEncodingException ex) {
+            System.out.println("Указана неизвестная кодировка " + ex.getMessage());
+            return false;
+        }
+        catch (IOException ex){
+            System.out.println("Возникла ошибка при копировании");
+            return false;
         }
         return true;
     }
+
+    /*
+    static String readFirstLineFromFileWithTryWithResources(String path) {
+        // открывается прямо на месте, а закрывается само!
+        try ( BufferedReader br = new BufferedReader(new FileReader(path))){
+            return br.readLine();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+     */
 }
